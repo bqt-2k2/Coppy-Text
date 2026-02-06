@@ -26,6 +26,7 @@ echo.
 echo Script nay se:
 echo - Tu dong tai Tesseract OCR
 echo - Tu dong cai dat vao: C:\Program Files\Tesseract-OCR
+echo - Tu dong them Tesseract vao PATH
 echo - Khong can can thiep cua nguoi dung
 echo.
 echo Luu y: Can ket noi internet

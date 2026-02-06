@@ -59,6 +59,8 @@
 
 ### Lỗi "Tesseract not found"
 → App đã có sẵn EasyOCR. Nếu vẫn lỗi, thử chạy `CAI_TESSERACT_TU_DONG.bat` để cài Tesseract hệ thống
+→ File `.bat` sẽ tự động tải, cài đặt Tesseract và thêm vào PATH
+→ Sau khi cài xong, khởi động lại Command Prompt hoặc ứng dụng để PATH có hiệu lực
 
 ### OCR không chính xác
 → Đảm bảo vùng chọn có text rõ ràng, không mờ
