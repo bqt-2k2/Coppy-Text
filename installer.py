@@ -11,6 +11,7 @@ import ctypes
 import urllib.request
 import tempfile
 import time
+import winreg
 
 APP_NAME = "CopyText App"
 APP_VERSION = "1.0.0"
@@ -141,6 +142,95 @@ def install_tesseract_silent(installer_path):
     print(f"  ❌ Không thể cài đặt Tesseract sau nhiều lần thử")
     return False
 
+def add_to_system_path(path):
+    """Thêm đường dẫn vào biến môi trường PATH của hệ thống"""
+    try:
+        # Mở registry key cho System Environment Variables
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE,
+            r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+            0,
+            winreg.KEY_READ | winreg.KEY_WRITE
+        )
+        
+        try:
+            # Đọc giá trị PATH hiện tại
+            current_path, _ = winreg.QueryValueEx(key, 'Path')
+            
+            # Kiểm tra xem path đã tồn tại chưa
+            paths = [p.strip() for p in current_path.split(';') if p.strip()]
+            if path in paths:
+                return True
+            
+            # Thêm path mới
+            paths.append(path)
+            new_path = ';'.join(paths)
+            
+            # Ghi lại vào registry
+            winreg.SetValueEx(key, 'Path', 0, winreg.REG_EXPAND_SZ, new_path)
+            
+            # Broadcast WM_SETTINGCHANGE để cập nhật môi trường
+            try:
+                import win32gui
+                import win32con
+                win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 'Environment')
+            except:
+                pass
+            
+            return True
+            
+        finally:
+            winreg.CloseKey(key)
+            
+    except (PermissionError, Exception):
+        return add_to_user_path(path)
+
+def add_to_user_path(path):
+    """Thêm đường dẫn vào biến môi trường PATH của user"""
+    try:
+        # Mở registry key cho User Environment Variables
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r'Environment',
+            0,
+            winreg.KEY_READ | winreg.KEY_WRITE
+        )
+        
+        try:
+            # Đọc giá trị PATH hiện tại
+            try:
+                current_path, _ = winreg.QueryValueEx(key, 'Path')
+            except FileNotFoundError:
+                current_path = ''
+            
+            # Kiểm tra xem path đã tồn tại chưa
+            paths = [p.strip() for p in current_path.split(';') if p.strip()]
+            if path in paths:
+                return True
+            
+            # Thêm path mới
+            paths.append(path)
+            new_path = ';'.join(paths)
+            
+            # Ghi lại vào registry
+            winreg.SetValueEx(key, 'Path', 0, winreg.REG_EXPAND_SZ, new_path)
+            
+            # Broadcast WM_SETTINGCHANGE để cập nhật môi trường
+            try:
+                import win32gui
+                import win32con
+                win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 'Environment')
+            except:
+                pass
+            
+            return True
+            
+        finally:
+            winreg.CloseKey(key)
+            
+    except Exception:
+        return False
+
 def install_tesseract():
     print("\n[2/4] Đang kiểm tra Tesseract OCR...")
     
@@ -157,6 +247,10 @@ def install_tesseract():
     for path in tesseract_paths:
         if os.path.exists(path):
             print(f"  ✅ Tesseract đã được cài đặt tại: {path}")
+            # Thêm vào PATH nếu chưa có
+            tesseract_dir = os.path.dirname(path)
+            if add_to_system_path(tesseract_dir):
+                print(f"  ✅ Đã thêm Tesseract vào PATH")
             return True
     
     print("  ⚠️  Tesseract chưa được cài đặt.")
@@ -172,6 +266,10 @@ def install_tesseract():
         
         # Cài đặt
         if install_tesseract_silent(installer_path):
+            # Thêm vào PATH
+            tesseract_dir = r"C:\Program Files\Tesseract-OCR"
+            if add_to_system_path(tesseract_dir):
+                print(f"  ✅ Đã thêm Tesseract vào PATH")
             # Xóa file installer tạm
             try:
                 if os.path.exists(installer_path):
