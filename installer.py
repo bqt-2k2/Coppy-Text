@@ -15,7 +15,7 @@ import time
 APP_NAME = "CopyText App"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "Bùi Quang Tiến THĐD"
-INSTALL_DIR = os.path.join(os.getenv('PROGRAMFILES', 'C:\\Program Files'), 'CopyTextApp')
+INSTALL_DIR = os.path.join(os.getenv('PROGRAMFILES', 'C:\\Program Files'), 'CopyTextApp') 
 USER_INSTALL_DIR = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~\\AppData\\Local')), 'CopyTextApp')
 
 def is_admin():
@@ -47,10 +47,11 @@ def download_tesseract_installer():
         
         # URL của Tesseract installer từ UB Mannheim (thử nhiều URL)
         urls = [
-            "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
-            "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
-            "https://github.com/UB-Mannheim/tesseract/releases/download/v5.4.0.20240605/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
-            "https://github.com/UB-Mannheim/tesseract/releases/download/v5.3.1.20230401/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
+            # "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
+            # "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
+            # "https://github.com/UB-Mannheim/tesseract/releases/download/v5.4.0.20240605/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
+            # "https://github.com/UB-Mannheim/tesseract/releases/download/v5.3.1.20230401/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
+            "https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe",
         ]
         
         temp_dir = tempfile.gettempdir()
