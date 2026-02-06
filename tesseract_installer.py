@@ -20,7 +20,7 @@ def is_admin():
     """Kiểm tra quyền Administrator"""
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
+    except Exception:
         return False
 
 def print_header():
@@ -68,7 +68,7 @@ def download_tesseract_installer():
         if os.path.exists(installer_path):
             try:
                 os.remove(installer_path)
-            except:
+            except (OSError, PermissionError):
                 pass
         
         # Tải file với progress
@@ -328,7 +328,7 @@ def main():
     try:
         if os.path.exists(installer_path):
             os.remove(installer_path)
-    except:
+    except (OSError, PermissionError):
         pass
     
     # Thêm vào PATH

@@ -16,7 +16,7 @@ import winreg
 APP_NAME = "CopyText App"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "Bùi Quang Tiến THĐD"
-INSTALL_DIR = os.path.join(os.getenv('PROGRAMFILES', 'C:\\Program Files'), 'CopyTextApp') 
+INSTALL_DIR = os.path.join(os.getenv('PROGRAMFILES', 'C:\\Program Files'), 'CopyTextApp')
 USER_INSTALL_DIR = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~\\AppData\\Local')), 'CopyTextApp')
 
 def is_admin():
