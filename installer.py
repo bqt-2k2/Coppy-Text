@@ -174,7 +174,11 @@ def add_to_system_path(path):
                 import win32gui
                 import win32con
                 win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 'Environment')
-            except:
+            except ImportError:
+                # win32gui không có sẵn, PATH sẽ có hiệu lực sau khi khởi động lại
+                pass
+            except Exception:
+                # Không thể broadcast, PATH sẽ có hiệu lực sau khi khởi động lại
                 pass
             
             return True
@@ -182,8 +186,15 @@ def add_to_system_path(path):
         finally:
             winreg.CloseKey(key)
             
-    except (PermissionError, Exception):
+    except PermissionError:
+        # Không có quyền ghi vào System PATH, thử User PATH
         return add_to_user_path(path)
+    except OSError as e:
+        # Lỗi registry hoặc hệ thống, thử User PATH
+        return add_to_user_path(path)
+    except Exception as e:
+        # Lỗi không mong muốn khác
+        return False
 
 def add_to_user_path(path):
     """Thêm đường dẫn vào biến môi trường PATH của user"""
@@ -220,7 +231,11 @@ def add_to_user_path(path):
                 import win32gui
                 import win32con
                 win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 'Environment')
-            except:
+            except ImportError:
+                # win32gui không có sẵn, PATH sẽ có hiệu lực sau khi khởi động lại
+                pass
+            except Exception:
+                # Không thể broadcast, PATH sẽ có hiệu lực sau khi khởi động lại
                 pass
             
             return True

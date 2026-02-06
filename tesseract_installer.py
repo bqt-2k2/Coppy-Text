@@ -178,7 +178,11 @@ def add_to_system_path(path):
                 import win32gui
                 import win32con
                 win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 'Environment')
-            except:
+            except ImportError:
+                # win32gui không có sẵn, PATH sẽ có hiệu lực sau khi khởi động lại
+                pass
+            except Exception:
+                # Không thể broadcast, PATH sẽ có hiệu lực sau khi khởi động lại
                 pass
             
             return True
@@ -232,7 +236,11 @@ def add_to_user_path(path):
                 import win32gui
                 import win32con
                 win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 'Environment')
-            except:
+            except ImportError:
+                # win32gui không có sẵn, PATH sẽ có hiệu lực sau khi khởi động lại
+                pass
+            except Exception:
+                # Không thể broadcast, PATH sẽ có hiệu lực sau khi khởi động lại
                 pass
             
             return True
