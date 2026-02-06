@@ -15,7 +15,7 @@ import time
 APP_NAME = "CopyText App"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "Bùi Quang Tiến THĐD"
-INSTALL_DIR = os.path.join(os.getenv('PROGRAMFILES', 'C:\\Program Files'), 'CopyTextApp')
+INSTALL_DIR = os.path.join(os.getenv('PROGRAMFILES', 'C:\\Program Files'), 'CopyTextApp') 
 USER_INSTALL_DIR = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~\\AppData\\Local')), 'CopyTextApp')
 
 def is_admin():
@@ -47,10 +47,11 @@ def download_tesseract_installer():
         
         # URL của Tesseract installer từ UB Mannheim (thử nhiều URL)
         urls = [
-            "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
-            "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
-            "https://github.com/UB-Mannheim/tesseract/releases/download/v5.4.0.20240605/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
-            "https://github.com/UB-Mannheim/tesseract/releases/download/v5.3.1.20230401/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
+            # "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
+            # "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
+            # "https://github.com/UB-Mannheim/tesseract/releases/download/v5.4.0.20240605/tesseract-ocr-w64-setup-5.4.0.20240605.exe",
+            # "https://github.com/UB-Mannheim/tesseract/releases/download/v5.3.1.20230401/tesseract-ocr-w64-setup-5.3.1.20230401.exe",
+            "https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe",
         ]
         
         temp_dir = tempfile.gettempdir()
@@ -140,6 +141,105 @@ def install_tesseract_silent(installer_path):
     print(f"  ❌ Không thể cài đặt Tesseract sau nhiều lần thử")
     return False
 
+def add_tesseract_to_path(install_dir):
+    """Thêm Tesseract vào System PATH"""
+    try:
+        print("  🔧 Đang thêm Tesseract vào PATH...")
+        
+        # Kiểm tra xem đã có trong PATH chưa
+        current_path = os.environ.get('PATH', '')
+        if install_dir in current_path:
+            print("  ✅ Tesseract đã có trong PATH")
+            return True
+        
+        # Thêm vào User PATH (không cần admin)
+        import winreg
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment', 0, winreg.KEY_ALL_ACCESS)
+        try:
+            user_path, _ = winreg.QueryValueEx(key, 'Path')
+        except WindowsError:
+            user_path = ''
+        
+        if install_dir not in user_path:
+            new_path = user_path + ';' + install_dir if user_path else install_dir
+            winreg.SetValueEx(key, 'Path', 0, winreg.REG_EXPAND_SZ, new_path)
+            print(f"  ✅ Đã thêm Tesseract vào PATH: {install_dir}")
+            
+            # Broadcast WM_SETTINGCHANGE để cập nhật PATH
+            import ctypes
+            HWND_BROADCAST = 0xFFFF
+            WM_SETTINGCHANGE = 0x1A
+            SMTO_ABORTIFHUNG = 0x0002
+            result = ctypes.c_long()
+            ctypes.windll.user32.SendMessageTimeoutW(
+                HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment',
+                SMTO_ABORTIFHUNG, 5000, ctypes.byref(result)
+            )
+        
+        winreg.CloseKey(key)
+        return True
+    except Exception as e:
+        print(f"  ⚠️  Lỗi khi thêm vào PATH: {str(e)}")
+        print(f"  💡 Bạn có thể thêm thủ công: {install_dir}")
+        return False
+
+def download_language_data(install_dir):
+    """Tải file ngôn ngữ tiếng Việt cho Tesseract"""
+    try:
+        tessdata_dir = os.path.join(install_dir, 'tessdata')
+        vie_file = os.path.join(tessdata_dir, 'vie.traineddata')
+        
+        # Kiểm tra đã có chưa
+        if os.path.exists(vie_file):
+            print("  ✅ Language data tiếng Việt đã có")
+            return True
+        
+        print("  📥 Đang tải language data tiếng Việt...")
+        
+        # URL của file ngôn ngữ tiếng Việt
+        url = "https://github.com/tesseract-ocr/tessdata/raw/main/vie.traineddata"
+        
+        # Tạo thư mục tessdata nếu chưa có
+        os.makedirs(tessdata_dir, exist_ok=True)
+        
+        # Tải file với SSL context (bỏ qua verify certificate nếu cần)
+        import ssl
+        
+        # Tạo SSL context không verify certificate
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        
+        # Tải file với progress
+        def show_progress(block_num, block_size, total_size):
+            downloaded = block_num * block_size
+            percent = min(100, int(downloaded * 100 / total_size)) if total_size > 0 else 0
+            if block_num % 5 == 0:  # Update mỗi 5 blocks
+                print(f"  📥 Đang tải: {percent}%", end='\r')
+        
+        # Tải file với SSL context
+        opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl_context))
+        urllib.request.install_opener(opener)
+        urllib.request.urlretrieve(url, vie_file, show_progress)
+        print()
+        
+        if os.path.exists(vie_file):
+            file_size = os.path.getsize(vie_file)
+            if file_size > 0:
+                print(f"  ✅ Đã tải language data tiếng Việt ({file_size // 1024} KB)")
+                return True
+            else:
+                print("  ⚠️  File tải về bị lỗi (0 KB)")
+                os.remove(vie_file)
+                return False
+        else:
+            print("  ⚠️  Không thể tải language data")
+            return False
+    except Exception as e:
+        print(f"  ⚠️  Lỗi khi tải language data: {str(e)}")
+        print("  💡 App vẫn có thể chạy với EasyOCR (đã được bundle)")
+        return False
+
 def install_tesseract():
     print("\n[2/4] Đang kiểm tra Tesseract OCR...")
     
@@ -156,6 +256,10 @@ def install_tesseract():
     for path in tesseract_paths:
         if os.path.exists(path):
             print(f"  ✅ Tesseract đã được cài đặt tại: {path}")
+            # Thêm vào PATH và tải language data
+            tesseract_dir = os.path.dirname(path)
+            add_tesseract_to_path(tesseract_dir)
+            download_language_data(tesseract_dir)
             return True
     
     print("  ⚠️  Tesseract chưa được cài đặt.")
@@ -177,6 +281,11 @@ def install_tesseract():
                     os.remove(installer_path)
             except:
                 pass
+            
+            # Thêm vào PATH và tải language data
+            install_dir = r"C:\Program Files\Tesseract-OCR"
+            add_tesseract_to_path(install_dir)
+            download_language_data(install_dir)
             return True
         else:
             print("  ⚠️  Không thể cài đặt Tesseract tự động.")

@@ -195,6 +195,7 @@ class FloatingIconApp:
         print("  • Đảm bảo vùng chọn có text rõ ràng để kết quả tốt nhất")
         print("\n" + "="*60)
         print("App đang chạy... Icon nổi sẽ xuất hiện ở góc màn hình\n")
+        print("LƯU Ý: Vui lòng không đóng cửa sổ này để app hoạt động bình thường.\n")
     
     def _show_tooltip(self, canvas):
         if self.tooltip:
