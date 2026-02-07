@@ -64,12 +64,22 @@ def download_tesseract_installer():
             except:
                 pass
         
+        # Setup SSL context để tải file
+        import ssl
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        
+        # Tải file với SSL context
+        opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl_context))
+        urllib.request.install_opener(opener)
+        
         # Tải file với progress
         def show_progress(block_num, block_size, total_size):
             downloaded = block_num * block_size
             percent = min(100, int(downloaded * 100 / total_size)) if total_size > 0 else 0
             if block_num % 10 == 0:  # Update mỗi 10 blocks
-                print(f"  📥 Đã tải: {percent}%", end='\r')
+                print(f"  📥 Đang tải: {percent}%", end='\r')
         
         # Thử từng URL cho đến khi thành công
         for url in urls:
@@ -85,6 +95,7 @@ def download_tesseract_installer():
         # Nếu tất cả URL đều thất bại
         print(f"  ❌ Không thể tải từ bất kỳ URL nào")
         return None
+        
     except Exception as e:
         print(f"  ⚠️  Lỗi khi tải Tesseract installer: {str(e)}")
         return None
@@ -197,7 +208,8 @@ def download_language_data(install_dir):
         print("  📥 Đang tải language data tiếng Việt...")
         
         # URL của file ngôn ngữ tiếng Việt
-        url = "https://github.com/tesseract-ocr/tessdata/raw/main/vie.traineddata"
+        # url = "https://github.com/tesseract-ocr/tessdata/raw/main/vie.traineddata"
+        url = "https://github.com/tesseract-ocr/tessdata_best/raw/main/vie.traineddata"
         
         # Tạo thư mục tessdata nếu chưa có
         os.makedirs(tessdata_dir, exist_ok=True)
